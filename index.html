@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPERACIÓN PICKING</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root {--primary: #6366f1;--bg: #0f172a;--card: #1e2937;--text: #e2e8f0;--accent: #67e8f9;}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {font-family: 'Inter', sans-serif;background: var(--bg);color: var(--text);min-height: 100vh;padding: 20px;}
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {text-align: center;margin-bottom: 40px;}
+        .subtitle {font-size: 1.1rem;font-weight: 600;color: var(--accent);letter-spacing: 2px;text-transform: uppercase;}
+        h1 {font-size: 2.8rem;font-weight: 700;background: linear-gradient(90deg, #6366f1, #a5b4fc);-webkit-background-clip: text;-webkit-text-fill-color: transparent;}
+        .hub-grid {display: grid;grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));gap: 20px;}
+        .sucursal-card {background: var(--card);border-radius: 15px;padding: 25px;text-align: center;border: 1px solid rgba(99, 102, 241, 0.2); transition: 0.3s;}
+        .sucursal-card.pendiente {border-color: var(--primary); box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);}
+        .sucursal-card.finalizada {border-color: #10b981; opacity: 0.7; background: #064e3b;}
+        .btn-upload {width: 100%; padding: 12px; background: rgba(103, 232, 249, 0.05); color: var(--accent); border: 1px dashed var(--accent); border-radius: 10px; cursor: pointer; margin-bottom: 10px; font-weight: 600;}
+        .btn-sucursal {width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;}
+        .btn-sucursal:disabled {background: #334155; cursor: not-allowed; opacity: 0.5;}
+        .modal {display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 20px;}
+        .modal-content {background: #1e2937; border-radius: 20px; width: 100%; max-width: 1000px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;}
+        .modal-header {padding: 20px; background: #0f172a; border-bottom: 1px solid #334155;}
+        .header-top {display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;}
+        .header-actions {display: flex; gap: 10px; align-items: center;}
+        .counter {background: #334155; padding: 10px 20px; border-radius: 30px; color: var(--accent); font-weight: 800; font-size: 1.4rem;}
+        .modal-body {padding: 20px; overflow-y: auto;}
+        .picking-table {width: 100%; border-collapse: collapse;}
+        .picking-table th {text-align: left; padding: 12px; color: var(--accent); background: #0f172a; position: sticky; top: 0;}
+        .picking-table td {padding: 12px; border-bottom: 1px solid #334155;}
+        input[type="number"] {width: 80px; background: #0f172a; border: 1px solid #475569; color: white; padding: 8px; border-radius: 5px; text-align: center;}
+        input[type="checkbox"] {width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary);}
+        .finalizar-btn {padding: 12px 25px; background: #10b981; color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;}
+        .guardar-btn {padding: 12px 25px; background: #f59e0b; color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;}
+        .close {cursor:pointer; font-size: 2.5rem; color: #94a3b8;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="subtitle">Logística Dimeo</div>
+            <h1>OPERACIÓN PICKING</h1>
+        </header>
+        <div class="hub-grid" id="sucursales-grid"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="header-top">
+                    <div>
+                        <h2 id="modal-sucursal" style="color:var(--accent); margin: 0;"></h2>
+                        <div id="folio-display" style="color: #6366f1; font-weight: 800; font-size: 1.1rem; margin-top: 5px;"></div>
+                    </div>
+                    <span class="close" onclick="cerrarModal()">×</span>
+                </div>
+                <div class="header-actions">
+                    <div class="counter" id="contador">0</div>
+                    <button class="guardar-btn" onclick="guardarProgreso()">💾 GUARDAR</button>
+                    <button id="btn-finalizar" class="finalizar-btn" onclick="procesarCierre()" style="display:none;">🏁 Finalizar y Descargar</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <table class="picking-table" id="tabla-picking">
+                    <thead>
+                        <tr>
+                            <th width="60%">Descripción del Producto</th>
+                            <th width="15%" style="text-align:center;">Pedido</th>
+                            <th width="15%" style="text-align:center;">Surtido</th>
+                            <th width="10%" style="text-align:center;">Ok</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const sucursales = ["Aguascalientes", "Américas", "Colli", "León", "Medrano", "Morelia", "Querétaro", "San Luis", "Tijuana", "Vallarta", "Think & Print"];
+        const inicialesSucursal = {
+            "Aguascalientes": "AGS", "Américas": "AME", "Colli": "COL", "León": "LEO", "Medrano": "MED",
+            "Morelia": "MOR", "Querétaro": "QRO", "San Luis": "SLP", "Tijuana": "TIJ", "Vallarta": "VTA", "Think & Print": "TYP"
+        };
+
+        let sucursalActual = "";
+        let folioExtraido = "";
+        let datosExtraidos = [];
+
+        function init() {
+            const grid = document.getElementById('sucursales-grid');
+            grid.innerHTML = "";
+            sucursales.forEach((nombre, i) => {
+                const id = (i + 1).toString().padStart(2, '0');
+                const datosGuardados = localStorage.getItem(`picking_${nombre}`);
+                const isPendiente = datosGuardados !== null;
+
+                grid.innerHTML += `
+                    <div class="sucursal-card ${isPendiente ? 'pendiente' : ''}" id="card-${nombre}">
+                        <div style="font-size:1.3rem; font-weight:600; margin-bottom:15px;">${nombre}</div>
+                        <input type="file" id="file-${id}" style="display:none" accept="application/pdf" onchange="leerPedidoPDF('${nombre}', this)">
+                        <button class="btn-upload" onclick="document.getElementById('file-${id}').click()">📄 Cargar PDF</button>
+                        <button class="btn-sucursal" id="btn-picking-${nombre}" ${!isPendiente ? 'disabled' : ''} onclick="abrirPickingGuardado('${nombre}')">Picking</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function leerPedidoPDF(sucursal, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(s => s.str).join(" ") + " ";
+            }
+            
+            const regexFolio = /([A-Z]{3}\/[A-Z_]+\/\d{5}|PEDIDO_[A-Z_]+-\d{5})/;
+            const matchFolio = text.match(regexFolio);
+            if (matchFolio) folioExtraido = matchFolio[0];
+            else { alert("Folio no detectado."); return; }
+
+            const regexProd = /(\[[A-Z0-9-]+\].+?)\s+([\d.]+)\s+PIEZA/g;
+            let match;
+            datosExtraidos = [];
+            while ((match = regexProd.exec(text)) !== null) {
+                datosExtraidos.push({ desc: match[1].trim(), cantPedida: parseFloat(match[2]), cantSurtida: parseFloat(match[2]), ok: false });
+            }
+            
+            if (datosExtraidos.length > 0) {
+                sucursalActual = sucursal;
+                cargarTabla();
+            } else alert("Error en lectura de datos.");
+            input.value = "";
+        }
+
+        function abrirPickingGuardado(sucursal) {
+            const saved = JSON.parse(localStorage.getItem(`picking_${sucursal}`));
+            if (saved) {
+                sucursalActual = sucursal;
+                folioExtraido = saved.folio;
+                datosExtraidos = saved.items;
+                cargarTabla();
+            }
+        }
+
+        function cargarTabla() {
+            document.getElementById("modal-sucursal").textContent = sucursalActual;
+            document.getElementById("folio-display").textContent = "REF: " + folioExtraido;
+            const tbody = document.querySelector("#tabla-picking tbody");
+            tbody.innerHTML = "";
+            
+            datosExtraidos.forEach((item, i) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-size:0.8rem;">${item.desc}</td>
+                        <td style="text-align:center; font-weight:bold;">${item.cantPedida}</td>
+                        <td style="text-align:center;"><input type="number" id="surtido-${i}" value="${item.cantSurtida}" min="0" oninput="actualizarDatoTemporal(${i})"></td>
+                        <td style="text-align:center;"><input type="checkbox" ${item.ok ? 'checked' : ''} onchange="actualizarDatoTemporal(${i})"></td>
+                    </tr>
+                `;
+            });
+            document.getElementById("modal").style.display = "flex";
+            revisarFinalizacion();
+        }
+
+        function actualizarDatoTemporal(index) {
+            const row = document.querySelectorAll("#tabla-picking tbody tr")[index];
+            datosExtraidos[index].cantSurtida = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+            datosExtraidos[index].ok = row.querySelector('input[type="checkbox"]').checked;
+            revisarFinalizacion();
+        }
+
+        function guardarProgreso() {
+            const dataToSave = { folio: folioExtraido, items: datosExtraidos };
+            localStorage.setItem(`picking_${sucursalActual}`, JSON.stringify(dataToSave));
+            const card = document.getElementById(`card-${sucursalActual}`);
+            card.classList.add('pendiente');
+            document.getElementById(`btn-picking-${sucursalActual}`).disabled = false;
+            alert("Progreso guardado.");
+        }
+
+        function revisarFinalizacion() {
+            const checks = document.querySelectorAll('#tabla-picking input[type="checkbox"]');
+            let marcados = 0;
+            checks.forEach(c => { if(c.checked) marcados++; });
+            document.getElementById("contador").textContent = datosExtraidos.length - marcados;
+            document.getElementById("btn-finalizar").style.display = (marcados === datosExtraidos.length) ? "block" : "none";
+        }
+
+        function procesarCierre() {
+            const hoy = new Date();
+            const fechaStr = hoy.toLocaleString();
+            const dia = String(hoy.getDate()).padStart(2, '0');
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const añoBreve = String(hoy.getFullYear()).slice(-2);
+            const folioPersonalizado = `${inicialesSucursal[sucursalActual]}_${dia}${mes}${añoBreve}`;
+
+            let dataTotal = [];
+            let dataExcepcion = [];
+
+            datosExtraidos.forEach(item => {
+                dataTotal.push([item.desc, item.cantPedida, item.cantSurtida]);
+                if (item.cantPedida - item.cantSurtida > 0) {
+                    dataExcepcion.push([item.desc, item.cantPedida, item.cantSurtida, item.cantPedida - item.cantSurtida]);
+                }
+            });
+
+            const aplicarHeader = (doc, subtitulo) => {
+                const mTop = 8; // MARGEN SUPERIOR SOLICITADO (8mm)
+
+                // IZQUIERDA: DIRECCIÓN
+                doc.setFontSize(10); doc.setFont("helvetica", "bold");
+                doc.text("DIMEO", 14, 10 + mTop); doc.setFont("helvetica", "normal");
+                doc.text("ALTOS HORNOS 2800", 14, 15 + mTop); doc.text("ALAMO INDUSTRIAL", 14, 20 + mTop);
+                doc.text("45593 SAN PEDRO TLAQUEPAQUE, JAL", 14, 25 + mTop); doc.text("MÉXICO", 14, 30 + mTop);
+                
+                // DERECHA: TÍTULOS Y SUCURSAL
+                doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                doc.text("OPERACIÓN PICKING", 196, 10 + mTop, { align: "right" });
+                doc.setFontSize(12);
+                doc.text(`Sucursal: ${sucursalActual}`, 196, 16 + mTop, { align: "right" });
+                doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                doc.text(`Generado: ${fechaStr}`, 196, 22 + mTop, { align: "right" });
+
+                // FOLIOS
+                doc.setFontSize(13); doc.setFont("helvetica", "bold"); doc.setTextColor(30, 60, 180);
+                doc.text(`${folioExtraido}`, 14, 40 + mTop); doc.text(`${folioPersonalizado}`, 196, 40 + mTop, { align: "right" });
+                
+                // SUBTÍTULO CENTRADO
+                doc.setTextColor(0, 0, 0); doc.setFontSize(11);
+                doc.text(subtitulo, 105, 52 + mTop, { align: "center" });
+                return 60 + mTop;
+            };
+
+            const docTotal = new jsPDF();
+            const y1 = aplicarHeader(docTotal, "REPORTE DE SURTIDO TOTAL");
+            docTotal.autoTable({ startY: y1, head: [['Descripción del Producto', 'Pedido', 'Surtido']], body: dataTotal, headStyles: { fillColor: [63, 101, 241] }, theme: 'grid' });
+            docTotal.save(`TOTAL_${folioPersonalizado}.pdf`);
+
+            setTimeout(() => {
+                const docExc = new jsPDF();
+                const y2 = aplicarHeader(docExc, "REPORTE DE EXCEPCIÓN DE SURTIDO");
+                if (dataExcepcion.length > 0) {
+                    docExc.autoTable({ startY: y2, head: [['Descripción del Producto', 'PEDIDO', 'SURTIDO', 'EXCEPCIÓN']], body: dataExcepcion, headStyles: { fillColor: [180, 0, 0] }, theme: 'striped' });
+                } else {
+                    docExc.setFont("helvetica", "bold"); docExc.text("SIN EXCEPCIONES DETECTADAS.", 105, y2 + 10, {align: "center"});
+                }
+                docExc.save(`EXCEPCION_${folioPersonalizado}.pdf`);
+            }, 1000);
+
+            localStorage.removeItem(`picking_${sucursalActual}`);
+            init();
+            cerrarModal();
+        }
+
+        function cerrarModal() { document.getElementById("modal").style.display = "none"; }
+        init();
+    </script>
+</body>
+</html>
