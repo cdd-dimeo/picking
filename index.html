@@ -13,9 +13,10 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {font-family: 'Inter', sans-serif;background: var(--bg);color: var(--text);min-height: 100vh;padding: 10px;}
         
-        #login-modal {display: flex; position: fixed; inset: 0; background: var(--bg); z-index: 2000; align-items: center; justify-content: center; padding: 20px;}
+        /* LOGIN RESPONSIVO */
+        #login-modal {display: flex; position: fixed; inset: 0; background: var(--bg); z-index: 2000; align-items: center; justify-content: center; padding: 15px;}
         .login-box {background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--primary); width: 100%; max-width: 400px; text-align: center;}
-        .login-box h2 {margin-bottom: 20px; color: var(--accent); font-size: 1.5rem;}
+        .login-box h2 {margin-bottom: 20px; color: var(--accent); font-size: clamp(1.2rem, 5vw, 1.5rem);}
         .login-box select, .login-box input {width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem;}
         .login-box button {width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;}
 
@@ -32,33 +33,33 @@
         .btn-sucursal {width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;}
         .btn-sucursal:disabled {background: #334155; cursor: not-allowed; opacity: 0.5;}
 
-        /* MODAL RESPONSIVA */
-        .modal {display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; padding: 10px;}
-        .modal-content {background: #1e2937; border-radius: 15px; width: 100%; max-width: 1000px; height: 95vh; display: flex; flex-direction: column; overflow: hidden;}
-        .modal-header {padding: 15px; background: #0f172a; border-bottom: 1px solid #334155;}
+        /* MODAL PICKING ALTAMENTE RESPONSIVA */
+        .modal {display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; padding: 5px;}
+        .modal-content {background: #1e2937; border-radius: 15px; width: 98%; max-width: 1000px; height: 98vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #334155;}
+        .modal-header {padding: 12px; background: #0f172a; border-bottom: 1px solid #334155;}
         .header-top {display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;}
-        .header-actions {display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;}
-        .counter {background: #334155; padding: 8px 15px; border-radius: 20px; color: var(--accent); font-weight: 800; font-size: 1.2rem;}
+        .header-actions {display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;}
+        .counter {background: #334155; padding: 6px 12px; border-radius: 20px; color: var(--accent); font-weight: 800; font-size: 1.1rem;}
         
-        .modal-body {padding: 10px; overflow: auto; flex-grow: 1; -webkit-overflow-scrolling: touch;}
-        .table-container { min-width: 100%; width: 100%; overflow-x: auto; }
+        .modal-body {padding: 5px; overflow: auto; flex-grow: 1; -webkit-overflow-scrolling: touch;}
+        .table-container { min-width: 100%; overflow-x: auto; }
         
-        .picking-table {width: 100%; border-collapse: collapse; font-size: 0.9rem;}
-        .picking-table th {text-align: left; padding: 10px; color: var(--accent); background: #0f172a; position: sticky; top: 0; z-index: 10;}
-        .picking-table td {padding: 10px; border-bottom: 1px solid #334155;}
+        .picking-table {width: 100%; border-collapse: collapse; font-size: 0.85rem;}
+        .picking-table th {text-align: left; padding: 8px; color: var(--accent); background: #0f172a; position: sticky; top: 0; z-index: 10;}
+        .picking-table td {padding: 8px; border-bottom: 1px solid #334155;}
         
-        input[type="number"] {width: 70px; background: #0f172a; border: 1px solid #475569; color: white; padding: 8px; border-radius: 5px; text-align: center;}
-        input[type="checkbox"] {width: 25px; height: 25px; cursor: pointer; accent-color: var(--primary);}
+        input[type="number"] {width: 65px; background: #0f172a; border: 1px solid #475569; color: white; padding: 6px; border-radius: 5px; text-align: center;}
+        input[type="checkbox"] {width: 28px; height: 28px; cursor: pointer; accent-color: var(--primary);}
         
-        .finalizar-btn {padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 0.9rem;}
-        .guardar-btn {padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 0.9rem;}
-        .close {cursor:pointer; font-size: 2rem; color: #94a3b8;}
+        .finalizar-btn {padding: 10px 18px; background: #10b981; color: white; border: none; border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 0.85rem;}
+        .guardar-btn {padding: 10px 18px; background: #f59e0b; color: white; border: none; border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 0.85rem;}
+        .close {cursor:pointer; font-size: 2rem; color: #94a3b8; padding: 5px;}
 
         @media (max-width: 600px) {
-            .header-actions { flex-direction: column; align-items: stretch; }
-            .counter { text-align: center; margin-bottom: 5px; }
-            .picking-table { font-size: 0.8rem; }
-            input[type="number"] { width: 60px; }
+            .header-actions { justify-content: center; width: 100%; }
+            .header-actions div { width: 100%; display: flex; justify-content: center; gap: 5px; }
+            .counter { width: 100%; text-align: center; margin-bottom: 5px; }
+            .picking-table th:nth-child(2), .picking-table td:nth-child(2) { display: none; } /* Ocultar columna Pedido en móviles extremos si es necesario */
         }
     </style>
 </head>
@@ -84,7 +85,7 @@
 
     <div class="container" id="main-app">
         <header>
-            <div class="subtitle">Gestión de Traspasos</div>
+            <div class="subtitle">Logística Dimeo</div>
             <h1>OPERACIÓN PICKING</h1>
             <div id="op-display" style="color: var(--accent); margin-top: 5px; font-size: 0.9rem;"></div>
         </header>
@@ -96,8 +97,8 @@
             <div class="modal-header">
                 <div class="header-top">
                     <div>
-                        <h2 id="modal-sucursal" style="color:var(--accent); margin: 0; font-size: 1.2rem;"></h2>
-                        <div id="folio-display" style="color: #6366f1; font-weight: 700; font-size: 0.9rem;"></div>
+                        <h2 id="modal-sucursal" style="color:var(--accent); margin: 0; font-size: 1.1rem;"></h2>
+                        <div id="folio-display" style="color: #6366f1; font-weight: 700; font-size: 0.85rem;"></div>
                     </div>
                     <span class="close" onclick="cerrarModal()">×</span>
                 </div>
@@ -114,10 +115,10 @@
                     <table class="picking-table" id="tabla-picking">
                         <thead>
                             <tr>
-                                <th width="55%">Producto</th>
-                                <th width="15%" style="text-align:center;">Ped.</th>
-                                <th width="15%" style="text-align:center;">Surt.</th>
-                                <th width="15%" style="text-align:center;">Ok</th>
+                                <th width="60%">Producto</th>
+                                <th width="12%" style="text-align:center;">Ped.</th>
+                                <th width="14%" style="text-align:center;">Surt.</th>
+                                <th width="14%" style="text-align:center;">Ok</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -254,8 +255,6 @@
             const generarPDF = (subtitulo, data, esExcepcion) => {
                 const doc = new jsPDF();
                 const mTop = 8;
-                
-                // Totales
                 let tPed = 0, tSur = 0, tExc = 0;
                 data.forEach(row => {
                     tPed += parseFloat(row[1]);
@@ -263,7 +262,6 @@
                     if(esExcepcion) tExc += parseFloat(row[3]);
                 });
 
-                // Header
                 doc.setFontSize(12); doc.setFont("helvetica", "bold");
                 doc.text("DIMEO", 14, 10 + mTop); 
                 doc.setFontSize(10); doc.setFont("helvetica", "normal");
@@ -280,7 +278,6 @@
                 doc.setTextColor(0, 0, 0); doc.setFontSize(11);
                 doc.text(subtitulo, 105, 52 + mTop, { align: "center" });
 
-                // Agregar fila de totales a la data
                 const finalData = [...data];
                 finalData.push([
                     { content: 'TOTALES', styles: { fontStyle: 'bold', halign: 'right' } },
