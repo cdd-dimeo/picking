@@ -13,7 +13,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {font-family: 'Inter', sans-serif;background: var(--bg);color: var(--text);min-height: 100vh;padding: 10px;}
         
-        /* LOGIN RESPONSIVO */
         #login-modal {display: flex; position: fixed; inset: 0; background: var(--bg); z-index: 2000; align-items: center; justify-content: center; padding: 15px;}
         .login-box {background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--primary); width: 100%; max-width: 400px; text-align: center;}
         .login-box h2 {margin-bottom: 20px; color: var(--accent); font-size: clamp(1.2rem, 5vw, 1.5rem);}
@@ -33,7 +32,6 @@
         .btn-sucursal {width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;}
         .btn-sucursal:disabled {background: #334155; cursor: not-allowed; opacity: 0.5;}
 
-        /* MODAL PICKING ALTAMENTE RESPONSIVA */
         .modal {display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; padding: 5px;}
         .modal-content {background: #1e2937; border-radius: 15px; width: 98%; max-width: 1000px; height: 98vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #334155;}
         .modal-header {padding: 12px; background: #0f172a; border-bottom: 1px solid #334155;}
@@ -54,13 +52,6 @@
         .finalizar-btn {padding: 10px 18px; background: #10b981; color: white; border: none; border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 0.85rem;}
         .guardar-btn {padding: 10px 18px; background: #f59e0b; color: white; border: none; border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 0.85rem;}
         .close {cursor:pointer; font-size: 2rem; color: #94a3b8; padding: 5px;}
-
-        @media (max-width: 600px) {
-            .header-actions { justify-content: center; width: 100%; }
-            .header-actions div { width: 100%; display: flex; justify-content: center; gap: 5px; }
-            .counter { width: 100%; text-align: center; margin-bottom: 5px; }
-            .picking-table th:nth-child(2), .picking-table td:nth-child(2) { display: none; } /* Ocultar columna Pedido en móviles extremos si es necesario */
-        }
     </style>
 </head>
 <body>
@@ -182,8 +173,7 @@
             }
             const regexFolio = /([A-Z]{3}\/[A-Z_]+\/\d{5}|PEDIDO_[A-Z_]+-\d{5})/;
             const matchFolio = text.match(regexFolio);
-            if (matchFolio) folioExtraido = matchFolio[0];
-            else { alert("Folio no detectado."); return; }
+            folioExtraido = matchFolio ? matchFolio[0] : "";
 
             const regexProd = /(\[[A-Z0-9-]+\].+?)\s+([\d.]+)\s+PIEZA/g;
             let match;
@@ -202,7 +192,7 @@
             const saved = JSON.parse(localStorage.getItem(`picking_${sucursal}`));
             if (saved) {
                 sucursalActual = sucursal;
-                folioExtraido = saved.folio;
+                folioExtraido = saved.folio || "";
                 datosExtraidos = saved.items;
                 cargarTabla();
             }
@@ -210,7 +200,7 @@
 
         function cargarTabla() {
             document.getElementById("modal-sucursal").textContent = sucursalActual;
-            document.getElementById("folio-display").textContent = "REF: " + folioExtraido;
+            document.getElementById("folio-display").textContent = folioExtraido ? "REF: " + folioExtraido : "";
             const tbody = document.querySelector("#tabla-picking tbody");
             tbody.innerHTML = "";
             datosExtraidos.forEach((item, i) => {
@@ -252,7 +242,7 @@
             const añoBreve = String(hoy.getFullYear()).slice(-2);
             const folioPersonalizado = `${inicialesSucursal[sucursalActual]}_${dia}${mes}${añoBreve}`;
 
-            const generarPDF = (subtitulo, data, esExcepcion) => {
+            const generarPDF = (tipoReporte, data, esExcepcion) => {
                 const doc = new jsPDF();
                 const mTop = 8;
                 let tPed = 0, tSur = 0, tExc = 0;
@@ -267,30 +257,43 @@
                 doc.setFontSize(10); doc.setFont("helvetica", "normal");
                 doc.text("ALTOS HORNOS 2800, ALAMO INDUSTRIAL", 14, 15 + mTop);
                 doc.text("45593 SAN PEDRO TLAQUEPAQUE, JAL, MÉXICO", 14, 20 + mTop);
-                doc.setFontSize(14); doc.setFont("helvetica", "bold");
+                
+                doc.setFontSize(12); doc.setFont("helvetica", "bold");
                 doc.text("OPERACIÓN PICKING", 196, 10 + mTop, { align: "right" });
+                
+                // TITULO TIPO DE REPORTE AHORA A LA DERECHA
                 doc.setFontSize(12);
-                doc.text(`Sucursal: ${sucursalActual}`, 196, 16 + mTop, { align: "right" });
+                doc.text(tipoReporte, 196, 16 + mTop, { align: "right" });
+                
                 doc.setFontSize(10); doc.setFont("helvetica", "normal");
                 doc.text(`Generado: ${hoy.toLocaleString()}`, 196, 22 + mTop, { align: "right" });
+                
                 doc.setFontSize(13); doc.setFont("helvetica", "bold"); doc.setTextColor(30, 60, 180);
-                doc.text(`${folioExtraido}`, 14, 40 + mTop); doc.text(`${folioPersonalizado}`, 196, 40 + mTop, { align: "right" });
-                doc.setTextColor(0, 0, 0); doc.setFontSize(11);
-                doc.text(subtitulo, 105, 52 + mTop, { align: "center" });
+                if(folioExtraido) doc.text(`${folioExtraido}`, 14, 40 + mTop); 
+                doc.text(`${folioPersonalizado}`, 196, 40 + mTop, { align: "right" });
+                
+                // SUCURSAL EN EL LUGAR DONDE ANTES IBA EL TITULO CENTRAL
+                doc.setTextColor(0, 0, 0); doc.setFontSize(11); doc.setFont("helvetica", "bold");
+                doc.text(`Sucursal: ${sucursalActual}`, 105, 52 + mTop, { align: "center" });
 
                 const finalData = [...data];
                 finalData.push([
                     { content: 'TOTALES', styles: { fontStyle: 'bold', halign: 'right' } },
-                    { content: tPed.toString(), styles: { fontStyle: 'bold', halign: 'center' } },
-                    { content: tSur.toString(), styles: { fontStyle: 'bold', halign: 'center' } },
-                    ...(esExcepcion ? [{ content: tExc.toString(), styles: { fontStyle: 'bold', halign: 'center' } }] : [])
+                    { content: tPed.toString(), styles: { fontStyle: 'bold', halign: 'left' } },
+                    { content: tSur.toString(), styles: { fontStyle: 'bold', halign: 'left' } },
+                    ...(esExcepcion ? [{ content: tExc.toString(), styles: { fontStyle: 'bold', halign: 'left' } }] : [])
                 ]);
 
                 doc.autoTable({
                     startY: 60 + mTop,
-                    head: [esExcepcion ? ['Producto', 'PEDIDO', 'SURTIDO', 'EXCEPCIÓN'] : ['Producto', 'Pedido', 'Surtido']],
+                    head: [esExcepcion ? ['Producto', 'PEDIDO', 'SURTIDO', 'EXCEPCIÓN'] : ['Producto', 'PEDIDO', 'SURTIDO']],
                     body: finalData,
-                    headStyles: { fillColor: esExcepcion ? [180, 0, 0] : [63, 101, 241] },
+                    headStyles: { 
+                        fillColor: [255, 255, 255], 
+                        textColor: [0, 0, 0],
+                        lineWidth: 0.1,
+                        lineColor: [200, 200, 200]
+                    },
                     theme: 'grid'
                 });
 
@@ -303,11 +306,12 @@
             const totalData = datosExtraidos.map(i => [i.desc, i.cantPedida, i.cantSurtida]);
             const excData = datosExtraidos.filter(i => i.cantPedida > i.cantSurtida).map(i => [i.desc, i.cantPedida, i.cantSurtida, i.cantPedida - i.cantSurtida]);
 
-            generarPDF("REPORTE DE SURTIDO TOTAL", totalData, false).save(`TOTAL_${folioPersonalizado}.pdf`);
+            // LLAMADA CON LOS NUEVOS TÍTULOS SOLICITADOS
+            generarPDF("SURTIDO", totalData, false).save(`PICKING_${folioPersonalizado}.pdf`);
             
             if(excData.length > 0) {
                 setTimeout(() => {
-                    generarPDF("REPORTE DE EXCEPCIÓN DE SURTIDO", excData, true).save(`EXCEPCION_${folioPersonalizado}.pdf`);
+                    generarPDF("EXCEPCIÓN", excData, true).save(`EXCEPCION_${folioPersonalizado}.pdf`);
                 }, 1500);
             }
 
